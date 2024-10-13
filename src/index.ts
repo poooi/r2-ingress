@@ -1,18 +1,36 @@
 /**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
+ * adds gzip content-encoding header to response so that cloudflare can compress it
+ * @param response
+ * @returns
  */
+export const compressResponse = (response: Response): Response => {
+  return new Response(response.body, {
+    headers: {
+      ...response.headers,
+      'content-encoding': 'gzip',
+    },
+  })
+}
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url)
+    const pathname = url.pathname
+    if (pathname === '/favicon.ico' || pathname.startsWith('/_next')) {
+      return await env.FRONTEND.fetch(request)
+    }
+    if (url.searchParams.has('_rsc')) {
+      return compressResponse(await env.FRONTEND.fetch(request))
+    }
+
+    if (request.url.endsWith('/')) {
+      return compressResponse(await env.FRONTEND.fetch(request))
+    }
+    const r2Response = await fetch(new Request(request))
+
+    if (r2Response.status === 404) {
+      return compressResponse(await env.FRONTEND.fetch(request))
+    }
+    return r2Response
+  },
+}
