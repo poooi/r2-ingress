@@ -10,11 +10,7 @@ workers_dev = false
 routes = [
     { pattern = "db.poi.moe/*", zone_name = "poi.moe" },
     { pattern = "nightlies.poi.moe/*", zone_name = "poi.moe" },
-]
-
-r2_buckets  = [
-    { binding = "BUCKET_POI_DB", bucket_name = "poi-db"},
-    { binding = "BUCKET_POI_NIGHTLIES", bucket_name = "poi-nightlies"},
+    { pattern = "nightly.poi.moe/*", zone_name = "poi.moe" },
 ]
 
 services = [
