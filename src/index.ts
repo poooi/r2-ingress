@@ -4,12 +4,9 @@
  * @returns
  */
 export const compressResponse = (response: Response): Response => {
-  return new Response(response.body, {
-    headers: {
-      ...response.headers,
-      'content-encoding': 'gzip',
-    },
-  })
+  const resp = new Response(response.body, response)
+  resp.headers.set('content-encoding', 'gzip')
+  return resp
 }
 
 export default {
